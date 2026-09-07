@@ -133,11 +133,11 @@ class csi_data_graphical_window(QWidget):
         self.deta_len = 0
 
     def update_curve_colors(self, color_list):
-        self.deta_len = len(color_list)
+        self.deta_len = min(len(color_list), CSI_DATA_COLUMNS)
         self.iq_colors = color_list
         self.plotWidget_ted.setXRange(0, self.deta_len//2)
         for i in range(self.deta_len):
-            self.curve_list[i].setPen(color_list[i])
+            self.curve_list[i + 2].setPen(color_list[i])
             self.curve_phase_list[i].setPen(color_list[i])
 
     def update_data(self):
@@ -162,11 +162,11 @@ class csi_data_graphical_window(QWidget):
 
         self.curve.setData(self.csi_row_data)
 
-        self.curve_list[CSI_DATA_COLUMNS].setData(agc_gain_data)
-        self.curve_list[CSI_DATA_COLUMNS+1].setData(fft_gain_data)
+        self.curve_list[0].setData(agc_gain_data)
+        self.curve_list[1].setData(fft_gain_data)
 
         for i in range(CSI_DATA_COLUMNS):
-            self.curve_list[i].setData(self.csi_amplitude_array[:, i])
+            self.curve_list[i + 2].setData(self.csi_amplitude_array[:, i])
             self.curve_phase_list[i].setData(self.csi_phase_array[:, i])
 
 def generate_subcarrier_colors(red_range, green_range, yellow_range, total_num,interval=1):
@@ -210,11 +210,19 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
 
         csv_reader = csv.reader(StringIO(strings))
         csi_data = next(csv_reader)
-        csi_data_len = int (csi_data[-3])
         if len(csi_data) != len(DATA_COLUMNS_NAMES) and len(csi_data) != len(DATA_COLUMNS_NAMES_C5C6):
             print('element number is not equal',len(csi_data),len(DATA_COLUMNS_NAMES) )
             # print(csi_data)
             log_file_fd.write('element number is not equal\n')
+            log_file_fd.write(strings + '\n')
+            log_file_fd.flush()
+            continue
+
+        try:
+            csi_data_len = int(csi_data[-3])
+        except (TypeError, ValueError):
+            print('invalid csi_data_len')
+            log_file_fd.write('invalid csi_data_len\n')
             log_file_fd.write(strings + '\n')
             log_file_fd.flush()
             continue
@@ -234,8 +242,12 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
             log_file_fd.flush()
             continue
 
-        fft_gain = int(csi_data[6])
-        agc_gain = int(csi_data[7])
+        if len(csi_data) == len(DATA_COLUMNS_NAMES_C5C6):
+            fft_gain = int(csi_data[6])
+            agc_gain = int(csi_data[7])
+        else:
+            fft_gain = 0
+            agc_gain = 0
 
         fft_gains.append(fft_gain)
         agc_gains.append(agc_gain)
@@ -255,27 +267,27 @@ def csi_data_read_parse(port: str, csv_writer, log_file_fd,callback=None):
             count = 1
             print('none',csi_data_len)
             if csi_data_len == 106:
-                colors = generate_subcarrier_colors((0,25), (27,53), None, len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,25), (27,52), None, len(csi_raw_data) // 2)
             elif  csi_data_len == 114:
-                colors = generate_subcarrier_colors((0,27), (29,56), None, len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,26), (28,56), None, len(csi_raw_data) // 2)
             elif  csi_data_len == 52:
-                colors = generate_subcarrier_colors((0,12), (13,26), None, len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,12), (13,25), None, len(csi_raw_data) // 2)
             elif  csi_data_len == 234 :
-                colors = generate_subcarrier_colors((0,28), (29,56), (60,116), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,28), (29,56), (60,116), len(csi_raw_data) // 2)
             elif  csi_data_len == 228 :
-                colors = generate_subcarrier_colors((0,28), (29,57), (57,113), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,28), (29,56), (57,113), len(csi_raw_data) // 2)
             elif  csi_data_len == 490 :
-                colors = generate_subcarrier_colors((0,61), (62,122), (123,245), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,61), (62,122), (123,244), len(csi_raw_data) // 2)
             elif  csi_data_len == 128 :
-                colors = generate_subcarrier_colors((0,31), (32,63), None, len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,31), (32,63), None, len(csi_raw_data) // 2)
             elif  csi_data_len == 256 :
-                colors = generate_subcarrier_colors((0,32), (32,63), (64,128), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,31), (32,63), (64,127), len(csi_raw_data) // 2)
             elif  csi_data_len == 512 :
-                colors = generate_subcarrier_colors((0,63), (64,127), (128,256), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,63), (64,127), (128,255), len(csi_raw_data) // 2)
             elif  csi_data_len == 384 :
-                colors = generate_subcarrier_colors((0,63), (64,127), (128,192), len(csi_raw_data))
+                colors = generate_subcarrier_colors((0,63), (64,127), (128,191), len(csi_raw_data) // 2)
             elif csi_data_len > 0 and csi_data_len <= 612:
-                raw_len = len(csi_raw_data)
+                raw_len = len(csi_raw_data) // 2
                 colors = generate_subcarrier_colors((0,raw_len//2), (raw_len//2+1,raw_len-1), None, raw_len)
             callback(colors)
 
