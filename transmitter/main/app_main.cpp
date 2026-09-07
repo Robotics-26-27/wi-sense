@@ -10,7 +10,7 @@
 
 #define CONFIG_LESS_INTERFERENCE_CHANNEL   11
 #define CONFIG_ESP_NOW_RATE                WIFI_PHY_RATE_MCS0_LGI
-#define CONFIG_SEND_FREQUENCY              100
+#define CONFIG_SEND_FREQUENCY              20
 
 static const uint8_t CONFIG_CSI_SEND_MAC[] = {0x1a, 0x00, 0x00, 0x00, 0x00, 0x00};
 static esp_now_peer_info_t peer;

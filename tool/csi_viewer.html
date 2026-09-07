@@ -532,6 +532,15 @@
           </label>
         </div>
         <div style="height: 12px;"></div>
+        <div class="control-grid">
+          <label>
+            <span id="collectionNameLabel">采集名称</span>
+            <span id="collectionNameDesc" class="field-help">为本次采集输入一个容易识别的名称。</span>
+            <input id="collectionNameInput" type="text" value="csi_collection_01" maxlength="80">
+          </label>
+        </div>
+        <div id="collectionStatus" class="field-help collection-status">未开始采集</div>
+        <div style="height: 12px;"></div>
         <div class="button-row">
           <button id="connectBtn" class="primary">连接串口</button>
           <button id="disconnectBtn" class="secondary" disabled>断开</button>
@@ -714,6 +723,10 @@
         clearChartsBtn: "清空波形",
         clearLogsBtn: "清空日志",
         downloadCsvBtn: "下载 CSV",
+        collectionNameLabel: "采集名称",
+        collectionNameDesc: "为本次采集输入一个容易识别的名称。",
+        collectionStatusIdle: "未开始采集",
+        collectionStatusActive: "采集中 · {count} 条 · {duration}",
         downloadLogBtn: "下载日志",
         eventTitle: "事件",
         colorMapTitle: "子载波颜色对照",
@@ -798,6 +811,10 @@
         clearChartsBtn: "Clear Charts",
         clearLogsBtn: "Clear Logs",
         downloadCsvBtn: "Download CSV",
+        collectionNameLabel: "Collection name",
+        collectionNameDesc: "Give this recording an easy-to-identify name.",
+        collectionStatusIdle: "Collection not started",
+        collectionStatusActive: "Collecting · {count} rows · {duration}",
         downloadLogBtn: "Download Log",
         eventTitle: "Events",
         colorMapTitle: "Subcarrier Color Map",
@@ -890,6 +907,8 @@
       chartViews: null,
       activeChartDrag: null,
       chartRenderPending: false,
+      collectionName: "csi_collection_01",
+      collectionStartedAt: null,
       pausedSnapshot: null,
       phaseUnwrap: false,
       phaseCenterZero: false,
@@ -905,6 +924,8 @@
     const statusText = document.getElementById("statusText");
     const sampleStrideInput = document.getElementById("sampleStrideInput");
     const sampleRatioHelp = document.getElementById("sampleRatioHelp");
+    const collectionNameInput = document.getElementById("collectionNameInput");
+    const collectionStatus = document.getElementById("collectionStatus");
     const baudRateText = document.getElementById("baudRateText");
     const pauseUiBtn = document.getElementById("pauseUiBtn");
     const pauseHint = document.getElementById("pauseHint");
@@ -1056,6 +1077,28 @@
       document.getElementById("connectBtn").disabled = connected;
       document.getElementById("disconnectBtn").disabled = !connected;
       updatePauseButton();
+      if (connected && state.collectionStartedAt === null) {
+        state.collectionStartedAt = Date.now();
+      }
+      renderCollectionStatus();
+    }
+
+    function formatDuration(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainder = seconds % 60;
+      return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+    }
+
+    function renderCollectionStatus() {
+      if (!state.collectionStartedAt) {
+        collectionStatus.textContent = t("collectionStatusIdle");
+        return;
+      }
+      const duration = formatDuration(Math.max(0, Math.floor((Date.now() - state.collectionStartedAt) / 1000)));
+      collectionStatus.textContent = t("collectionStatusActive", {
+        count: state.csvLines.length,
+        duration,
+      });
     }
 
     function getInputSampleStride() {
@@ -1368,6 +1411,7 @@
         state.csvHeader = parsed.header.slice();
       }
       state.csvLines.push(parsed.line);
+      renderCollectionStatus();
       state.frames.push(parsed);
       trimHistory();
 
@@ -2375,6 +2419,8 @@
       setText("clearChartsBtn", t("clearChartsBtn"));
       setText("clearLogsBtn", t("clearLogsBtn"));
       setText("downloadCsvBtn", t("downloadCsvBtn"));
+      setText("collectionNameLabel", t("collectionNameLabel"));
+      setText("collectionNameDesc", t("collectionNameDesc"));
       setText("downloadLogBtn", t("downloadLogBtn"));
       setText("eventTitle", t("eventTitle"));
       setText("colorMapTitle", t("colorMapTitle"));
@@ -2514,6 +2560,7 @@
       state.subcarrierColors = [];
       state.lastMeta = null;
       state.pausedSnapshot = null;
+      state.collectionStartedAt = state.connected ? Date.now() : null;
       resetAllChartViewports();
       scheduleRender();
       addEvent("eventClearedCharts");
@@ -2534,7 +2581,10 @@
       const count = state.csvLines.length;
       const header = state.csvHeader ? state.csvHeader.map(escapeCsvField).join(",") + "\n" : "";
       const content = header + state.csvLines.join("\n") + "\n";
-      downloadText("csi_data.csv", content, "text/csv;charset=utf-8");
+      const safeName = (collectionNameInput.value.trim() || "csi_collection_01")
+        .replace(/[^a-z0-9_-]+/gi, "_")
+        .replace(/^_+|_+$/g, "") || "csi_collection_01";
+      downloadText(safeName + ".csv", content, "text/csv;charset=utf-8");
       addEvent("eventCsvExported", { count });
     }
 
@@ -2598,6 +2648,9 @@
       });
       sampleStrideInput.addEventListener("change", () => {
         sampleStrideInput.value = String(getInputSampleStride());
+      });
+      collectionNameInput.addEventListener("input", () => {
+        state.collectionName = collectionNameInput.value;
       });
       const syncPhaseCenterZeroEnabled = () => {
         if (!phaseCenterZeroToggle) {
@@ -2739,6 +2792,7 @@
         toggleUiPause();
       });
       window.addEventListener("resize", scheduleRender);
+      window.setInterval(renderCollectionStatus, 1000);
       window.addEventListener("beforeunload", () => {
         if (state.port) {
           disconnectSerial(false);
