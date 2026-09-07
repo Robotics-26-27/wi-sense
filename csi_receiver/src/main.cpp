@@ -10,7 +10,7 @@ const uint8_t transmitterMac[] = {0x1a, 0x00, 0x00, 0x00, 0x00, 0x00};
 }
 
 void onCsi(void *, wifi_csi_info_t *info) {
-    if (info == nullptr || info->buf == nullptr || info->payload == nullptr) {
+    if (info == nullptr || info->buf == nullptr) {
         return;
     }
 
@@ -19,7 +19,6 @@ void onCsi(void *, wifi_csi_info_t *info) {
     }
 
     uint32_t sequence = 0;
-    memcpy(&sequence, info->payload + 15, sizeof(sequence));
     Serial.printf("CSI_DATA,%lu,%02x:%02x:%02x:%02x:%02x:%02x,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\"[",
                   static_cast<unsigned long>(sequence), info->mac[0], info->mac[1],
                   info->mac[2], info->mac[3], info->mac[4], info->mac[5], info->rx_ctrl.rssi,
