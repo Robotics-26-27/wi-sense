@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ESP CSI Web Serial Viewer</title>
   <style>
     :root {
-      --bg: #07111f;
-      --bg-soft: #0d1c31;
-      --panel: rgba(12, 27, 48, 0.94);
-      --panel-2: rgba(20, 38, 67, 0.96);
-      --border: rgba(159, 197, 255, 0.15);
-      --text: #e9f2ff;
-      --muted: #92a8cb;
-      --accent: #59c8ff;
-      --accent-2: #79ffbb;
-      --warn: #ffbe5c;
-      --danger: #ff7288;
-      --grid: rgba(255, 255, 255, 0.08);
-      --shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+      --bg: #edf6fb;
+      --bg-soft: #dceef7;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-2: #f4faff;
+      --border: rgba(37, 126, 169, 0.22);
+      --text: #163247;
+      --muted: #5d7788;
+      --accent: #1689bd;
+      --accent-2: #12a68a;
+      --warn: #c77918;
+      --danger: #d04d5f;
+      --grid: rgba(28, 111, 151, 0.14);
+      --shadow: 0 18px 44px rgba(30, 93, 120, 0.14);
     }
 
     * {
@@ -28,11 +28,11 @@
     body {
       margin: 0;
       color: var(--text);
-      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: "Aptos", "Segoe UI", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(89, 200, 255, 0.16), transparent 28%),
-        radial-gradient(circle at top right, rgba(121, 255, 187, 0.10), transparent 22%),
-        linear-gradient(180deg, #06101d 0%, #091321 100%);
+        radial-gradient(circle at top left, rgba(77, 190, 232, 0.20), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(18, 166, 138, 0.10), transparent 24%),
+        linear-gradient(180deg, #f8fcfe 0%, var(--bg) 100%);
     }
 
     .app {
@@ -95,7 +95,7 @@
       gap: 10px;
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(225, 242, 249, 0.82);
       font-size: 13px;
     }
 
@@ -104,12 +104,12 @@
       height: 10px;
       border-radius: 999px;
       background: var(--danger);
-      box-shadow: 0 0 16px rgba(255, 114, 136, 0.55);
+      box-shadow: 0 0 16px rgba(208, 77, 95, 0.35);
     }
 
     .status-dot.connected {
       background: var(--accent-2);
-      box-shadow: 0 0 16px rgba(121, 255, 187, 0.6);
+      box-shadow: 0 0 16px rgba(18, 166, 138, 0.4);
     }
 
     .row,
@@ -125,34 +125,6 @@
       justify-content: space-between;
     }
 
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .lang-switch button {
-      min-width: 88px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: transparent;
-    }
-
-    .lang-switch button.active {
-      background: linear-gradient(180deg, #29416d, #1b2d4f);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-    }
-
-    .lang-switch-separator {
-      color: var(--muted);
-      font-size: 13px;
-      user-select: none;
-    }
-
     label {
       display: flex;
       flex-direction: column;
@@ -163,9 +135,9 @@
 
     input {
       width: 100%;
-      background: rgba(255, 255, 255, 0.05);
+      background: #ffffff;
       color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(37, 126, 169, 0.25);
       border-radius: 10px;
       padding: 10px 12px;
       outline: none;
@@ -180,7 +152,7 @@
       border: 0;
       border-radius: 12px;
       padding: 10px 14px;
-      background: linear-gradient(180deg, #29416d, #1b2d4f);
+      background: linear-gradient(180deg, #3caed3, #1689bd);
       color: var(--text);
       font-weight: 600;
       cursor: pointer;
@@ -204,16 +176,16 @@
     }
 
     button.secondary {
-      background: rgba(255, 255, 255, 0.08);
+      background: #e2f1f7;
     }
 
     button.primary {
-      background: linear-gradient(180deg, #1f8cff, #165bcc);
-      box-shadow: 0 14px 30px rgba(31, 140, 255, 0.30);
+      background: linear-gradient(180deg, #35b8e0, #1689bd);
+      box-shadow: 0 14px 30px rgba(22, 137, 189, 0.24);
     }
 
     button.primary:hover:not(:disabled) {
-      box-shadow: 0 16px 34px rgba(31, 140, 255, 0.36);
+      box-shadow: 0 16px 34px rgba(22, 137, 189, 0.30);
     }
 
     .control-grid {
@@ -233,7 +205,7 @@
       border-radius: 14px;
       padding: 14px;
       min-height: 94px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(37, 126, 169, 0.14);
     }
 
     .stat-card .label {
@@ -336,9 +308,9 @@
       display: block;
       width: 100%;
       height: 300px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+      background: linear-gradient(180deg, #ffffff, #edf8fc);
       border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(37, 126, 169, 0.18);
       cursor: grab;
       touch-action: none;
     }
@@ -394,16 +366,16 @@
     }
 
     .pause-btn.running {
-      background: linear-gradient(180deg, #17613f, #0f412b);
+      background: linear-gradient(180deg, #24b89a, #128b78);
     }
 
     .pause-btn.paused {
-      background: linear-gradient(180deg, #8a5121, #5a3314);
+      background: linear-gradient(180deg, #e3a34a, #c77918);
     }
 
     .pause-btn.stopped {
-      background: linear-gradient(180deg, #3a4257, #232a3c);
-      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
+      background: linear-gradient(180deg, #9ab7c5, #6e91a2);
+      box-shadow: 0 10px 22px rgba(30, 93, 120, 0.14);
     }
 
     .pause-hint {
@@ -424,8 +396,8 @@
       gap: 8px;
       padding: 8px 10px;
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: #ffffff;
+      border: 1px solid rgba(37, 126, 169, 0.16);
       font-size: 12px;
       color: var(--text);
     }
@@ -439,9 +411,9 @@
 
     pre {
       margin: 0;
-      background: #081220;
-      color: #dfe9ff;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #163247;
+      color: #eaf7fc;
+      border: 1px solid rgba(37, 126, 169, 0.24);
       border-radius: 14px;
       padding: 14px;
       font-size: 12px;
@@ -475,8 +447,8 @@
     .footer-note code,
     .muted code,
     .usage-guide code {
-      color: #dff8ff;
-      background: rgba(255, 255, 255, 0.06);
+      color: #08779f;
+      background: #e2f1f7;
       padding: 2px 6px;
       border-radius: 6px;
     }
@@ -509,11 +481,6 @@
       <section class="panel section">
         <div class="toolbar" style="margin-bottom: 10px;">
           <h1 id="appTitle">ESP CSI Web Serial Viewer</h1>
-          <div class="lang-switch" aria-label="Language switch">
-            <button id="langZhBtn" type="button" class="secondary active">中文</button>
-            <span class="lang-switch-separator">/</span>
-            <button id="langEnBtn" type="button" class="secondary">English</button>
-          </div>
         </div>
         <div class="status-pill">
           <span id="statusDot" class="status-dot"></span>
@@ -795,7 +762,7 @@
         pageTitle: "ESP CSI Web Serial Viewer",
         appTitle: "ESP CSI Web Serial Viewer",
         introText: "Browser replacement for <code>csi_data_read_parse.py</code>: connect serial, validate <code>CSI_DATA</code>, render charts in real time, and export CSV / logs.",
-        langToggle: "中文",
+        langToggle: "English",
         statusConnected: "Connected",
         statusDisconnected: "Disconnected",
         baudRateLabel: "Baud Rate",
@@ -903,7 +870,7 @@
       subcarrierColors: [],
       renderTimer: null,
       lastMeta: null,
-      language: "zh",
+      language: "en",
       chartViews: null,
       activeChartDrag: null,
       chartRenderPending: false,
@@ -984,7 +951,7 @@
     state.chartViews.phaseHistory.xPartner = state.chartViews.amplitude;
 
     function t(key, vars = {}) {
-      const messages = I18N[state.language] || I18N.zh;
+      const messages = I18N.en;
       const template = messages[key] ?? key;
       return template.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ""));
     }
@@ -2405,7 +2372,7 @@
     }
 
     function applyTranslations() {
-      document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
+      document.documentElement.lang = "en";
       document.title = t("pageTitle");
       setText("appTitle", t("appTitle"));
       setText("baudRateLabel", t("baudRateLabel"));
@@ -2446,10 +2413,6 @@
       setText("iqChartDesc", t("iqChartDesc"));
       setText("amplitudeChartDesc", t("amplitudeChartDesc"));
       setText("phaseHistoryChartDesc", t("phaseHistoryChartDesc"));
-      document.getElementById("langZhBtn").classList.toggle("active", state.language === "zh");
-      document.getElementById("langEnBtn").classList.toggle("active", state.language === "en");
-      document.getElementById("langZhBtn").setAttribute("aria-pressed", state.language === "zh" ? "true" : "false");
-      document.getElementById("langEnBtn").setAttribute("aria-pressed", state.language === "en" ? "true" : "false");
       updatePauseButton();
       setConnected(state.connected);
       renderEventLog(!state.uiPaused);
@@ -2638,14 +2601,6 @@
       document.getElementById("downloadLogBtn").addEventListener("click", downloadLog);
       document.getElementById("applySampleStrideBtn").addEventListener("click", applySampleStride);
       pauseUiBtn.addEventListener("click", toggleUiPause);
-      document.getElementById("langZhBtn").addEventListener("click", () => {
-        state.language = "zh";
-        applyTranslations();
-      });
-      document.getElementById("langEnBtn").addEventListener("click", () => {
-        state.language = "en";
-        applyTranslations();
-      });
       sampleStrideInput.addEventListener("change", () => {
         sampleStrideInput.value = String(getInputSampleStride());
       });

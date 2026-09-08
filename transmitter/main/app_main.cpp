@@ -19,9 +19,9 @@ static unsigned long last_send_time = 0;
 
 void wifi_init() {
     WiFi.mode(WIFI_STA);
-    WiFi.begin();
     WiFi.disconnect();
 
+    esp_wifi_set_bandwidth(WIFI_IF_STA, WIFI_BW_HT20);
     esp_wifi_set_channel(CONFIG_LESS_INTERFERENCE_CHANNEL, WIFI_SECOND_CHAN_NONE);
     esp_wifi_set_mac(WIFI_IF_STA, CONFIG_CSI_SEND_MAC);
     esp_wifi_set_ps(WIFI_PS_NONE);
