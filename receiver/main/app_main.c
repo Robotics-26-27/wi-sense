@@ -52,7 +52,7 @@
 #define ESP_IF_WIFI_STA ESP_MAC_WIFI_STA
 #endif
 
-static const uint8_t CONFIG_CSI_SEND_MAC[] = {0x1a, 0x00, 0x00, 0x00, 0x00, 0x00};
+static const uint8_t CONFIG_CSI_SEND_MAC[] = {0x28, 0x68, 0xd2, 0x7f, 0x2b, 0x78};
 static const char *TAG = "csi_recv";
 
 static void wifi_init()
@@ -89,8 +89,8 @@ static void wifi_init()
     };
     ESP_ERROR_CHECK(esp_wifi_set_bandwidths(ESP_IF_WIFI_STA, &bandwidth));
 #else
-    ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, CONFIG_WIFI_BANDWIDTH));
     ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_STA, CONFIG_WIFI_BANDWIDTH));
 #endif
 
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
@@ -126,12 +126,18 @@ static void wifi_esp_now_init(esp_now_peer_info_t peer)
 
 static void wifi_csi_rx_cb(void *ctx, wifi_csi_info_t *info)
 {
+    static int rejected_count = 0;
+
     if (!info || !info->buf) {
         ets_printf("CSI callback received invalid data\n");
         return;
     }
 
     if (memcmp(info->mac, CONFIG_CSI_SEND_MAC, 6)) {
+        if (rejected_count < 5) {
+            ets_printf("Ignored CSI source: " MACSTR "\n", MAC2STR(info->mac));
+            rejected_count++;
+        }
         return;
     }
 
@@ -254,6 +260,8 @@ static void wifi_csi_init()
 
 void receiver_init()
 {
+    ets_printf("Receiver startup\n");
+
     /**
      * @brief Initialize NVS
      */
@@ -263,11 +271,13 @@ void receiver_init()
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+    ets_printf("NVS ready\n");
 
     /**
      * @brief Initialize Wi-Fi
      */
     wifi_init();
+    ets_printf("WiFi ready on channel %d, HT20\n", CONFIG_LESS_INTERFERENCE_CHANNEL);
 
     /**
      * @brief Initialize ESP-NOW
@@ -282,7 +292,9 @@ void receiver_init()
     };
 
     wifi_esp_now_init(peer);
+    ets_printf("ESP-NOW ready\n");
 
     wifi_csi_init();
+    ets_printf("CSI ready; waiting for source " MACSTR "\n", MAC2STR(CONFIG_CSI_SEND_MAC));
 }
 

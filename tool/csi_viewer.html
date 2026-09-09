@@ -548,7 +548,7 @@
             <div class="status-pill"><span id="invalidCountLabel">坏帧</span><strong id="invalidCountText">0</strong></div>
             <div class="status-pill"><span id="logCountLabel">日志行</span><strong id="logCountText">0</strong></div>
             <div class="status-pill"><span id="subcarrierCountLabel">子载波</span><strong id="subcarrierCountText">0</strong></div>
-            <div class="status-pill"><span id="baudRateLabel">波特率</span><strong id="baudRateText">921600</strong></div>
+            <div class="status-pill"><span id="baudRateLabel">波特率</span><strong id="baudRateText">115200</strong></div>
           </div>
           <div class="status-pill"><span id="formatLabel">当前格式</span><strong id="formatText">-</strong></div>
         </div>
@@ -876,6 +876,7 @@
       chartRenderPending: false,
       collectionName: "csi_collection_01",
       collectionStartedAt: null,
+      collectionPausedAt: null,
       pausedSnapshot: null,
       phaseUnwrap: false,
       phaseCenterZero: false,
@@ -1046,6 +1047,10 @@
       updatePauseButton();
       if (connected && state.collectionStartedAt === null) {
         state.collectionStartedAt = Date.now();
+        state.collectionPausedAt = null;
+      } else if (!connected) {
+        state.collectionStartedAt = null;
+        state.collectionPausedAt = null;
       }
       renderCollectionStatus();
     }
@@ -1061,7 +1066,8 @@
         collectionStatus.textContent = t("collectionStatusIdle");
         return;
       }
-      const duration = formatDuration(Math.max(0, Math.floor((Date.now() - state.collectionStartedAt) / 1000)));
+      const currentTime = state.collectionPausedAt ?? Date.now();
+      const duration = formatDuration(Math.max(0, Math.floor((currentTime - state.collectionStartedAt) / 1000)));
       collectionStatus.textContent = t("collectionStatusActive", {
         count: state.csvLines.length,
         duration,
@@ -2346,9 +2352,14 @@
       state.uiPaused = !state.uiPaused;
       updatePauseButton();
       if (state.uiPaused) {
+        state.collectionPausedAt = Date.now();
         state.pausedSnapshot = createPausedSnapshot();
         addEvent("eventUiPaused");
         return;
+      }
+      if (state.collectionPausedAt !== null) {
+        state.collectionStartedAt += Date.now() - state.collectionPausedAt;
+        state.collectionPausedAt = null;
       }
       state.pausedSnapshot = null;
       addEvent("eventUiResumed");
@@ -2376,7 +2387,7 @@
       document.title = t("pageTitle");
       setText("appTitle", t("appTitle"));
       setText("baudRateLabel", t("baudRateLabel"));
-      baudRateText.textContent = "921600";
+      baudRateText.textContent = "115200";
       setText("sampleStrideLabel", t("sampleStrideLabel"));
       setText("sampleStrideDesc", t("sampleStrideDesc"));
       setText("applySampleStrideBtn", t("applySampleStrideBtn"));
@@ -2426,7 +2437,7 @@
         return;
       }
       try {
-        const baudRate = 921600;
+        const baudRate = 115200;
         state.uiPaused = false;
         state.port = await navigator.serial.requestPort();
         await state.port.open({
@@ -2471,6 +2482,8 @@
         state.port = null;
         state.reader = null;
         state.disconnecting = false;
+        state.collectionStartedAt = null;
+        state.collectionPausedAt = null;
         updatePauseButton();
         setConnected(false);
         if (logMessage) {
@@ -2524,6 +2537,7 @@
       state.lastMeta = null;
       state.pausedSnapshot = null;
       state.collectionStartedAt = state.connected ? Date.now() : null;
+      state.collectionPausedAt = null;
       resetAllChartViewports();
       scheduleRender();
       addEvent("eventClearedCharts");
